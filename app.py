@@ -58,3 +58,10 @@ if image_file is not None:
 
         plt.imshow(img)
         st.image(img, use_column_width=True,clamp = True)
+        text=pt.image_to_string(img)
+        st.markdown("<h1 style='color:yellow;'>Extracted Text</h1>", unsafe_allow_html=True)
+        if(text!=""):
+            slot1=st.empty()
+            slot1.markdown(f"{text}", unsafe_allow_html=True)
+            polar=round(TextBlob(text).sentiment.polarity,2)
+     
