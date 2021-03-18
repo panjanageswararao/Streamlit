@@ -6,3 +6,4 @@ streamlit
 pytesseract
 opencv-contrib-python-headless
 easyocr
+textblob
