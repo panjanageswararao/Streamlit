@@ -1,15 +1,14 @@
-import streamlit as st
-from PIL import Image
 import pytesseract as pt
-import cv2 as cv
-import cv2
+import streamlit as st
 import pytesseract
-import matplotlib.pyplot as plt
-from pytesseract import Output
-import numpy as np
+import cv2
 from textblob import TextBlob
-import easyocr
-reader = easyocr.Reader(['en'])
+import cv2 as cv
+import numpy as np
+from pytesseract import Output
+import re
+import matplotlib.pyplot as plt
+
 
 st.sidebar.markdown("""<style>body {background-color: #2C3454;color:white;}</style><body></body>""", unsafe_allow_html=True)
 st.markdown("""<h1 style='text-align: center; color: white;font-size:60px;margin-top:-50px;'>CROWDSHAKTI</h1><h1 style='text-align: center; color: white;font-size:30px;margin-top:-30px;'>Machine Learning <br></h1>""",unsafe_allow_html=True)
@@ -25,44 +24,31 @@ def intro():
 
 st.sidebar.markdown("<h1 style='text-align: center;color: #2C3454;margin-top:30px;margin-bottom:-20px;'>Select Image</h1>", unsafe_allow_html=True)
 
+
 image_file = st.sidebar.file_uploader("", type=["jpg","png","jpeg"])
 
 
-
 def extract(img):
-    res=reader.readtext(img)
-    for (bbox, text, prob) in res:
-        (tl, tr, br, bl) = bbox
-        tl = (int(tl[0]), int(tl[1]))
-        tr = (int(tr[0]), int(tr[1]))
-        br = (int(br[0]), int(br[1]))
-        bl = (int(bl[0]), int(bl[1]))
-        cv2.rectangle(img, tl, br, (0, 255, 0), 5)
-
+    text=pt.image_to_string(img)
+    st.markdown("<h1 style='color:yellow;'>Extracted Text</h1>", unsafe_allow_html=True)
+    if(text!=""):
+      slot1=st.empty()
+      slot1.markdown(f"{text}", unsafe_allow_html=True)
+      polar=round(TextBlob(text).sentiment.polarity,2)
+      
+    d = pytesseract.image_to_data(img,output_type=Output.DICT)
+    st.markdown("<h1 style='color:yellow;'>Extracted Image</h1>", unsafe_allow_html=True)
+    n_boxes = len(d['level'])
+    for i in range(n_boxes):
+        if(d['text'][i] != ""):
+            (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
+            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 4)
+    plt.imshow(img)
+    st.image(img, use_column_width=True,clamp = True)
+     
 if image_file is not None:
     st.markdown("<h1 style='color:yellow;'>Uploaded Image</h1>", unsafe_allow_html=True)
     st.image(image_file,width=400)
     file_bytes = np.asarray(bytearray(image_file.read()), dtype=np.uint8)
-    radio=st.sidebar.radio("Select Action",('EasyOCR','Pytesseract'))
-    img = cv.imdecode( file_bytes, cv.IMREAD_COLOR)
-    st.markdown("<h1 style='color:yellow;'>Extracted Image</h1>", unsafe_allow_html=True)
-    if (radio =='EasyOCR'):
-        extract(img)
-        st.image(img, use_column_width=True,clamp = True)
-    else:
-        d = pytesseract.image_to_data(img,output_type=Output.DICT)
-        n_boxes = len(d['level'])
-        for i in range(n_boxes):
-            if(d['text'][i] != ""):
-                (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
-                cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-        plt.imshow(img)
-        st.image(img, use_column_width=True,clamp = True)
-    text=pt.image_to_string(img)
-    st.markdown("<h1 style='color:yellow;'>Extracted Text</h1>", unsafe_allow_html=True)
-    if(text!=""):
-        slot1=st.empty()
-        slot1.markdown(f"{text}", unsafe_allow_html=True)
-        polar=round(TextBlob(text).sentiment.polarity,2)
-     
+    img = cv.imdecode(file_bytes, cv.IMREAD_COLOR)
+    extract(img) 
